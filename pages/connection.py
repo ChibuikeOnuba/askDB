@@ -63,10 +63,11 @@ def main():
                 st.write(f"Error: {str(e)}")
                 exit(1)
                 
-            return db
-        
     cols = st.columns(4)           
-    cols[3].button(type="primary", label="Connect another database")
+    cols[3].button(type="primary", label="Connect another database")   
+             
+    return db
+        
     
 
 if __name__ == "__main__":
