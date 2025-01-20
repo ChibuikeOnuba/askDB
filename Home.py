@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+from database_utils import write_query
 
 
 def initialize_app():
@@ -34,7 +35,6 @@ def execute_query(sql_query, connection):
 
 def main():
     
-
     initialize_app()
     # Sidebar for SQL dialect selection
     with st.sidebar:
@@ -56,6 +56,7 @@ def main():
     
     # Main content area
     st.title("Natural Language to SQL Query Tool")
+    db = st.text_input("Enter Database URI Key")
     
     # Natural language input
     col1, col2 = st.columns(2)
@@ -67,7 +68,11 @@ def main():
     
     # Translate button
     if col1.button("Translate to SQL"):
-        st.session_state.generated_sql = translate_to_sql(nl_query, sql_dialect)
+        if db is True:
+            sql = write_query({"question": nl_query})
+            st.session_state.generated_sql = "sql"
+        else:
+            st.error("Please provide your database URI key")
     
     # SQL query editor
     sql_query = col2.text_area(
