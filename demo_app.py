@@ -4,6 +4,7 @@ import pandas as pd
 from langchain.utilities import SQLDatabase
 
 
+
 def initialize_app():
     # Set page title and configure layout
     st.set_page_config(page_title="Natural Language to SQL Translator", layout="wide")
@@ -13,6 +14,22 @@ def initialize_app():
         st.session_state.generated_sql = ""
     if 'query_results' not in st.session_state:
         st.session_state.query_results = None
+    
+    if st.button(type="primary", label="Connect to Database"):
+        db_user = "root"
+        db_password = "root123"
+        db_host = "localhost"
+        db_name = "atliq_tshirts"
+
+        try:
+            # Attempt to create a database connection
+            db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}", sample_rows_in_table_info=3)
+            st.success("DATABASE CONNECTED SUCCESSFULLY")
+        except Exception as e:
+            # Print failure message and the specific error
+            st.success("DATABASE CONNECTION FAILED")
+            st.success(f"Error: {str(e)}")
+        
 
 def translate_to_sql(natural_language, dialect):
     # This is a placeholder function - in a real application, you would integrate
@@ -36,24 +53,10 @@ def execute_query(sql_query, connection):
 def main():
     
     initialize_app()
+    
+    db = None
     # Sidebar for SQL dialect selection
     with st.sidebar:
-        if st.button(type="primary", label="Connect to Database"):
-            db_user = "root"
-            db_password = "root123"
-            db_host = "localhost"
-            db_name = "atliq_tshirts"
-
-            try:
-                # Attempt to create a database connection
-                db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}", sample_rows_in_table_info=3)
-                st.success("DATABASE CONNECTED SUCCESSFULLY")
-                return db
-            except Exception as e:
-                # Print failure message and the specific error
-                st.success("DATABASE CONNECTION FAILED")
-                st.success(f"Error: {str(e)}")
-                exit(1)
         st.title("Settings")
         sql_dialect = st.selectbox(
             "Select SQL Dialect",
@@ -69,7 +72,7 @@ def main():
         3. Edit the SQL if needed
         4. Click 'Run Query' to execute
         """)
-        
+ 
     
     # Main content area
     st.title("Natural Language to SQL Query Tool")
@@ -85,7 +88,7 @@ def main():
     # Translate button
     if col1.button("Translate to SQL"):
         if nl_query:
-            st.write(db.get_table_info())
+            st.write(db.table_info)
             st.session_state.generated_sql = nl_query
         else:
             st.error("Please enter natural language query")
