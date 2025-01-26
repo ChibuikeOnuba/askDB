@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 from langchain.utilities import SQLDatabase
 
+from test_util import generate_sql_query
 
 
 def initialize_app():
@@ -15,21 +16,22 @@ def initialize_app():
     if 'query_results' not in st.session_state:
         st.session_state.query_results = None
     
-    if st.button(type="primary", label="Connect to Database"):
-        db_user = "root"
-        db_password = "root123"
-        db_host = "localhost"
-        db_name = "atliq_tshirts"
 
-        try:
-            # Attempt to create a database connection
-            db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}", sample_rows_in_table_info=3)
-            st.success("DATABASE CONNECTED SUCCESSFULLY")
-        except Exception as e:
-            # Print failure message and the specific error
-            st.success("DATABASE CONNECTION FAILED")
-            st.success(f"Error: {str(e)}")
-        
+    db_user = "root"
+    db_password = "root123"
+    db_host = "localhost"
+    db_name = "atliq_tshirts"
+
+    try:
+        # Attempt to create a database connection
+        db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}", sample_rows_in_table_info=3)
+        st.success("DATABASE CONNECTED SUCCESSFULLY")
+        return db
+    except Exception as e:
+        # Print failure message and the specific error
+        st.error("DATABASE CONNECTION FAILED")
+        st.error(f"Error: {str(e)}")
+        return None
 
 def translate_to_sql(natural_language, dialect):
     # This is a placeholder function - in a real application, you would integrate
@@ -52,9 +54,8 @@ def execute_query(sql_query, connection):
 
 def main():
     
-    initialize_app()
+    db = initialize_app()
     
-    db = None
     # Sidebar for SQL dialect selection
     with st.sidebar:
         st.title("Settings")
@@ -89,7 +90,10 @@ def main():
     if col1.button("Translate to SQL"):
         if nl_query:
             st.write(db.table_info)
-            st.session_state.generated_sql = nl_query
+            from test_util import generate_sql_query
+generate_sql_query("How many t-shirts do we have left for Nike in extra small and white color?", db=db)['query']
+        elif db is None:
+            st.error("Database connection failed")
         else:
             st.error("Please enter natural language query")
     
