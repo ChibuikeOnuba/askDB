@@ -1,9 +1,10 @@
 import streamlit as st
 import sqlite3
+import os
 import pandas as pd
 from langchain.utilities import SQLDatabase
+from test_util import generate_sql_query, query_sql
 
-from test_util import generate_sql_query
 
 
 def initialize_app():
@@ -85,13 +86,14 @@ def main():
         "Enter your question in natural language",
         height=150
     )
+    result = result = generate_sql_query(nl_query, db=db)
+    sql = result["query"]
+    llm = result["llm"]    
     
     # Translate button
     if col1.button("Translate to SQL"):
         if nl_query:
-            st.write(db.table_info)
-            from test_util import generate_sql_query
-generate_sql_query("How many t-shirts do we have left for Nike in extra small and white color?", db=db)['query']
+            st.session_state.generated_sql = sql
         elif db is None:
             st.error("Database connection failed")
         else:
@@ -110,26 +112,19 @@ generate_sql_query("How many t-shirts do we have left for Nike in extra small an
     # Execute query button
     if col2.button("Run Query"):
         if sql_query:
-            st.success("DONE")
-            # In a real application, you would handle the database connection properly
-            # This is just for demonstration
             try:
-                # Using SQLite for demonstration
-                conn = sqlite3.connect(':memory:')
-                results = execute_query(sql_query, conn)
-                if results is not None:
-                    st.success("Query executed successfully!")
-                    st.dataframe(results)
-                conn.close()
+                response = query_sql(db, question=nl_query, llm=llm,sql=sql_query)
+                st.session_state.query_results = response
+                st.success("Query executed successfully")
             except Exception as e:
-                st.error(f"Error connecting to database: {str(e)}")
+                st.error(f"Error: {str(e)}")
         else:
             st.warning("Please enter a SQL query to execute")
     
     # Results area
     if st.session_state.query_results is not None:
         st.subheader("Query Results")
-        st.dataframe(st.session_state.query_results)
+        st.write(st.session_state.query_results)
 
 if __name__ == "__main__":
     main()
